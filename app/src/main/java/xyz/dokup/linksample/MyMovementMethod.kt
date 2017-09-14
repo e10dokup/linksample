@@ -21,12 +21,14 @@ open class MyMovementMethod : LinkMovementMethod() {
                 }
                 return _instance
             }
+
+        private const val DELAY_TIME: Long = 500
     }
 
-    private var lastActionDownClickableSpan: ClickableSpan? = null
+    private var keepingSpan: ClickableSpan? = null
     private var validClick = true
 
-    private fun getClickableSpanFromPosition(widget: TextView, buffer: Spannable, x: Int, y: Int): ClickableSpan? {
+    private fun findSpan(widget: TextView, buffer: Spannable, x: Int, y: Int): ClickableSpan? {
         var x = x
         var y = y
         x -= widget.totalPaddingLeft
@@ -49,32 +51,32 @@ open class MyMovementMethod : LinkMovementMethod() {
 
     override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
         val action = event.action
-
-        if (action == MotionEvent.ACTION_UP ||
-                action == MotionEvent.ACTION_DOWN ||
-                action == MotionEvent.ACTION_CANCEL) {
-            val currentClickableSpan = getClickableSpanFromPosition(widget, buffer, event.x.toInt(), event.y.toInt())
-            if (action == MotionEvent.ACTION_UP) {
-                if (validClick && lastActionDownClickableSpan != null && currentClickableSpan == lastActionDownClickableSpan) {
-                    lastActionDownClickableSpan?.onClick(widget)
+        val currentSpan = findSpan(widget, buffer, event.x.toInt(), event.y.toInt())
+        currentSpan ?: return false
+        when (action) {
+            MotionEvent.ACTION_DOWN -> {
+                keepingSpan = currentSpan
+                validClick = true
+                // クリック無効化のための遅延処理
+                Handler().postDelayed(DELAY_TIME) {
+                    validClick = false
                 }
-                lastActionDownClickableSpan = null
-                return true
-            } else if (action == MotionEvent.ACTION_DOWN) {
-                if (currentClickableSpan != null) {
-                    lastActionDownClickableSpan = currentClickableSpan
-                    validClick = true
-                    Handler().postDelayed(300) {
-                        validClick = false
-                    }
-                    return true
-                }
-            } else if (action == MotionEvent.ACTION_CANCEL) {
-                lastActionDownClickableSpan = null
                 return true
             }
+            MotionEvent.ACTION_UP -> {
+                // クリックが有効かつDOWN-UPまで同じSpanが維持されていたらonClickを呼ぶ
+                if (validClick && currentSpan == keepingSpan) {
+                    keepingSpan?.onClick(widget)
+                }
+                keepingSpan = null
+                return true
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                keepingSpan = null
+                return true
+            }
+            else -> return false
         }
-        return false
     }
 
     private fun Handler.postDelayed(delayMillis: Long, r: () -> Unit) {
