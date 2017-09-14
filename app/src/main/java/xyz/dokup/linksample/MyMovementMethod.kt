@@ -31,16 +31,19 @@ open class MyMovementMethod : LinkMovementMethod() {
     private fun findSpan(widget: TextView, buffer: Spannable, x: Int, y: Int): ClickableSpan? {
         var x = x
         var y = y
+
+        // タッチ座標の補正
         x -= widget.totalPaddingLeft
         y -= widget.totalPaddingTop
-
         x += widget.scrollX
         y += widget.scrollY
 
+        // タッチ文字の導出
         val layout = widget.layout
         val line = layout.getLineForVertical(y)
         val off = layout.getOffsetForHorizontal(line, x.toFloat())
 
+        // spanを含んているか確認して結果を返す
         val link = buffer.getSpans(off, off, ClickableSpan::class.java)
         return if (link.isNotEmpty()) {
             link[0]
