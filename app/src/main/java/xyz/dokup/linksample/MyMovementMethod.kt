@@ -26,7 +26,6 @@ open class MyMovementMethod : LinkMovementMethod() {
     }
 
     private var keepingSpan: ClickableSpan? = null
-    private var validClick = true
 
     private fun findSpan(widget: TextView, buffer: Spannable, x: Int, y: Int): ClickableSpan? {
         var x = x
@@ -59,16 +58,15 @@ open class MyMovementMethod : LinkMovementMethod() {
         when (action) {
             MotionEvent.ACTION_DOWN -> {
                 keepingSpan = currentSpan
-                validClick = true
                 // クリック無効化のための遅延処理
                 Handler().postDelayed(DELAY_TIME) {
-                    validClick = false
+                    keepingSpan = null
                 }
                 return true
             }
             MotionEvent.ACTION_UP -> {
                 // クリックが有効かつDOWN-UPまで同じSpanが維持されていたらonClickを呼ぶ
-                if (validClick && currentSpan == keepingSpan) {
+                if (currentSpan == keepingSpan) {
                     keepingSpan?.onClick(widget)
                 }
                 keepingSpan = null
