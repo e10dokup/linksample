@@ -26,6 +26,7 @@ open class MyMovementMethod : LinkMovementMethod() {
     }
 
     private var keepingSpan: ClickableSpan? = null
+    private val invalidationHandler = Handler()
 
     private fun findSpan(widget: TextView, buffer: Spannable, x: Int, y: Int): ClickableSpan? {
         var x = x
@@ -59,7 +60,7 @@ open class MyMovementMethod : LinkMovementMethod() {
             MotionEvent.ACTION_DOWN -> {
                 keepingSpan = currentSpan
                 // クリック無効化のための遅延処理
-                Handler().postDelayed(DELAY_TIME) {
+                invalidationHandler.postDelayed(DELAY_TIME) {
                     keepingSpan = null
                 }
                 return true
@@ -70,6 +71,7 @@ open class MyMovementMethod : LinkMovementMethod() {
                     keepingSpan?.onClick(widget)
                 }
                 keepingSpan = null
+                invalidationHandler.removeCallbacksAndMessages(null)
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
